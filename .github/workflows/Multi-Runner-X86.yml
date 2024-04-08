@@ -28,7 +28,7 @@ jobs:
       status: ${{ steps.set-up.outputs.status }}
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
       - name: Set up environment
         id: set-up
         run: |
