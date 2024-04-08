@@ -10,6 +10,7 @@ sed -i "/helloworld/d" "feeds.conf.default"
 echo "src-git helloworld https://github.com/LeXwDeX/helloworld" >> "feeds.conf.default"
 
 # Update and install feeds
+./scripts/feeds clean
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
@@ -20,10 +21,10 @@ echo "src-git helloworld https://github.com/LeXwDeX/helloworld" >> "feeds.conf.d
 # rm -rf ./package/lean/passwall_package
 
 # Openclash
-git clone -b master --depth=1 https://github.com/vernesong/OpenClash.git ./package/lean/luci-app-openclash
-mkdir -p ./package/lean/openclash
-cp -rf ./package/lean/luci-app-openclash/luci-app-openclash/* ./package/lean/openclash
-rm -rf ./package/lean/luci-app-openclash
+# git clone -b master --depth=1 https://github.com/vernesong/OpenClash.git ./package/lean/luci-app-openclash
+# mkdir -p ./package/lean/openclash
+# cp -rf ./package/lean/luci-app-openclash/luci-app-openclash/* ./package/lean/openclash
+# rm -rf ./package/lean/luci-app-openclash
 
 # # Mosdns
 # # find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f
