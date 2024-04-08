@@ -1,1 +1,38 @@
+name: Build
 
+on:
+  workflow_dispatch:
+    inputs:
+      REPO_URL:
+        description: 'Repository URL'
+        required: true
+      REPO_BRANCH:
+        description: 'Branch Name'
+        required: true
+      CONFIG_FILE:
+        description: 'Config File Path'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Clone source code and prepare
+      run: |
+        git clone ${{ github.event.inputs.REPO_URL }} -b ${{ github.event.inputs.REPO_BRANCH }} openwrt
+        [ -e files ] && mv files openwrt/files
+        [ -e ${{ github.event.inputs.CONFIG_FILE }} ] && mv ${{ github.event.inputs.CONFIG_FILE }} openwrt/.config
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        make defconfig
+
+    - name: Compile the firmware
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(($(nproc) + 1)) || make -j$(($(nproc) + 1)) V=s
