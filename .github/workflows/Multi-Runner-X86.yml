@@ -1,0 +1,82 @@
+name: Build LEDE-X86
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+
+env:
+  REPO_URL: https://github.com/LeXwDeX/LEDE
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: SEED/X86/seed.config
+  DIY_P1_SH: SCRIPTS/X86/x86-part1.sh
+  DIY_P2_SH: SCRIPTS/X86/x86-part2.sh
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+
+jobs:
+  prepare-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.set-up.outputs.status }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up environment
+        id: set-up
+        run: |
+          sudo swapoff -a
+          sudo rm -rf /etc/apt/sources.list.d/*
+          sudo -E apt-get -qq update
+          sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc-s1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libreadline-dev libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget ccache curl swig coreutils vim nano python3 python3-pip python3-ply haveged lrzsz scons
+          echo "status=success" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare-environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone source code and Load custom feeds
+        run: |
+          git clone $REPO_URL -b $REPO_BRANCH openwrt
+          [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+          chmod +x $DIY_P1_SH
+          $DIY_P1_SH
+          
+      - name: Compile the firmware
+        run: |
+          cd openwrt
+          make defconfig
+          make -j$(($(nproc) + 1))
+
+  upload-and-post-process:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Upload bin directory
+        if: env.UPLOAD_BIN_DIR == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenWrt_bin
+          path: openwrt/bin
+
+      - name: Organize files and Upload firmware directory
+        if: env.UPLOAD_FIRMWARE == 'true'
+        run: |
+          cd openwrt/bin/targets/*/*
+          rm -rf packages
+          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
+        - name: Upload firmware
+          if: env.UPLOAD_FIRMWARE == 'true'
+          uses: actions/upload-artifact@v4
+          with:
+            name: OpenWrt_firmware
+            path: ${{ env.FIRMWARE }}
