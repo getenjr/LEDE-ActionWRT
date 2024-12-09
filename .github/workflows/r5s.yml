@@ -30,6 +30,7 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
+  TERM: xterm
 
 jobs:
   build:
@@ -125,7 +126,6 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        export TERM=xterm
         make -j$(nproc) V=s || make -j$(nproc) V=s
         echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
