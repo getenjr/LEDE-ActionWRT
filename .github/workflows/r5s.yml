@@ -45,12 +45,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libtool pkg-config build-essential
 
-    - name: Clean Build Directory
-      run: |
-        cd openwrt
-        make clean
-        make dirclean
-
     - name: Show system
       run: |
         echo -e "Total CPU cores\t: $(nproc)"
@@ -83,6 +77,16 @@ jobs:
       run: |
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Clean Build Directory
+      run: |
+        if [ -d "openwrt" ]; then
+          cd openwrt
+          make clean
+          make dirclean
+        else
+          echo "openwrt 目錄不存在，跳過清理步驟。"
+        fi
 
     - name: Load custom feeds
       run: |
