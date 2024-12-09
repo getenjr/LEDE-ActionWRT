@@ -5,7 +5,6 @@
 ## 提示
 - 默认登录地址是[192.168.50.1](http://192.168.50.1)
 - 默认用户名是root，密码是password。（适用于所有版本）
-- 这个版本的OpenWrt非常简单，源头使用的是自己仓库的LEDE（但没有一些包，比如adbyby）。
 
 ## 鸣谢
 - [Actions-OtakuWrt](https://github.com/F-T-Otaku/Actions-OtakuWrt)
