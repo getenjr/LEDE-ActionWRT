@@ -99,9 +99,6 @@ jobs:
     - name: Feeds Check again
       run: cd openwrt && ./scripts/feeds update -a && ./scripts/feeds install -a
     
-    - name: Install Helloworld
-      run: ./scripts/feeds update helloworld && ./scripts/feeds install -a -f -p helloworld
-
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
