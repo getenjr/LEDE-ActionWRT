@@ -1,0 +1,190 @@
+#
+# Copyright (c) 2023 Lex
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# Description: Test build PassWall packages using GitHub Actions
+#
+
+name: Test PassWall Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  CONFIG_FILE: SEED/X86/passwall-test.config
+  DIY_P1_SH: SCRIPTS/X86/x86-part1.sh
+  DIY_P2_SH: SCRIPTS/X86/x86-part2.sh
+  UPLOAD_BIN_DIR: true
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc-s1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Create test config
+      run: |
+        cat > $CONFIG_FILE << 'EOF'
+        CONFIG_TARGET_x86=y
+        CONFIG_TARGET_x86_64=y
+        CONFIG_TARGET_x86_64_DEVICE_generic=y
+        CONFIG_PACKAGE_luci-app-passwall=y
+        CONFIG_PACKAGE_luci-app-passwall_Transparent_Proxy=y
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
+        CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy=y
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ChinaDNS_NG=y
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Brook=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_NaiveProxy=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Client=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Libev_Server=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_GO=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Trojan_Plus=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=n
+        CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray_Plugin=n
+        CONFIG_PACKAGE_shadowsocks-libev=n
+        CONFIG_PACKAGE_shadowsocks-libev-config=n
+        CONFIG_PACKAGE_shadowsocks-libev-ss-local=n
+        CONFIG_PACKAGE_shadowsocks-libev-ss-redir=n
+        CONFIG_PACKAGE_shadowsocks-libev-ss-rules=n
+        CONFIG_PACKAGE_shadowsocks-libev-ss-server=n
+        CONFIG_PACKAGE_shadowsocks-libev-ss-tunnel=n
+        CONFIG_PACKAGE_shadowsocks-rust=n
+        CONFIG_PACKAGE_shadowsocks-rust-sslocal=n
+        CONFIG_PACKAGE_shadowsocks-rust-ssmanager=n
+        CONFIG_PACKAGE_shadowsocks-rust-ssserver=n
+        CONFIG_PACKAGE_shadowsocks-rust-ssservice=n
+        CONFIG_PACKAGE_shadowsocks-rust-ssurl=n
+        CONFIG_PACKAGE_sing-box=y
+        CONFIG_SING_BOX_WITH_CLASH_API=y
+        CONFIG_SING_BOX_WITH_DHCP=y
+        CONFIG_SING_BOX_WITH_ECH=y
+        CONFIG_SING_BOX_WITH_GVISOR=y
+        CONFIG_SING_BOX_WITH_QUIC=y
+        CONFIG_SING_BOX_WITH_UTLS=y
+        CONFIG_SING_BOX_WITH_WIREGUARD=y
+        CONFIG_PACKAGE_chinadns-ng=y
+        CONFIG_PACKAGE_dns2socks=y
+        CONFIG_PACKAGE_dns2tcp=y
+        CONFIG_PACKAGE_ip-full=y
+        CONFIG_PACKAGE_libuci-lua=y
+        CONFIG_PACKAGE_lua=y
+        CONFIG_PACKAGE_luci-lib-jsonc=y
+        CONFIG_PACKAGE_luci-lib-nixio=y
+        CONFIG_PACKAGE_resolveip=y
+        CONFIG_PACKAGE_tcping=y
+        CONFIG_PACKAGE_unzip=y
+        CONFIG_PACKAGE_curl=y
+        CONFIG_PACKAGE_ip6tables=y
+        CONFIG_PACKAGE_iptables=y
+        CONFIG_PACKAGE_iptables-mod-conntrack-extra=y
+        CONFIG_PACKAGE_iptables-mod-iprange=y
+        CONFIG_PACKAGE_iptables-mod-socket=y
+        CONFIG_PACKAGE_kmod-ipt-socket=y
+        CONFIG_PACKAGE_kmod-ipt-nat6=y
+        EOF
+
+    - name: Load custom feeds
+      run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a -f -p passwall_packages && ./scripts/feeds install -a
+
+    - name: Load custom configuration
+      run: |
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    - name: Ensure configuration
+      run: |
+        cd openwrt
+        make defconfig
+        cat .config
+
+    - name: Download package
+      id: package
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Compile packages
+      id: compile
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make package/feeds/passwall_packages/shadowsocks-libev/compile V=s
+        make package/feeds/passwall_packages/sing-box/compile V=s
+        make package/feeds/luci/luci-app-passwall/compile V=s
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload bin directory
+      uses: actions/upload-artifact@main
+      if: env.UPLOAD_BIN_DIR == 'true' && !cancelled()
+      with:
+        name: OpenWrt_bin_passwall_test
+        path: openwrt/bin 
