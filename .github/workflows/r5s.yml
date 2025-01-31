@@ -107,6 +107,11 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: Ensure configuration
+      run: |
+        cd openwrt
+        make defconfig
+
     - name: Download package
       id: package
       run: |
