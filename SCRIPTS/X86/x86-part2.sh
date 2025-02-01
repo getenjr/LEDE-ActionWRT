@@ -41,8 +41,5 @@ sed -i 's/192.168.1.1/192.168.50.1/g' package/base-files/files/bin/config_genera
 # Modify default Hostname
 sed -i 's/OpenWrt/LEDE/g' package/base-files/files/bin/config_generate
 
-# Force using older version of packages if needed
-sed -i 's/PKG_VERSION:=3.8.3/PKG_VERSION:=3.7.8/g' feeds/packages/libs/gnutls/Makefile
-
 # Clean build directory before compilation
 rm -rf tmp/
