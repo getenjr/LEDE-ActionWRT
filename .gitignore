@@ -4,7 +4,7 @@ Log/
 # 忽略临时文件
 *.tmp
 *.log
-。ds_store
+.DS_Store
 
 # 忽略编译生成的文件
 build/
