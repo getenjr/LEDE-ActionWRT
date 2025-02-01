@@ -7,7 +7,7 @@ cd lede
 
 # Add SSRP
 sed -i "/helloworld/d" "feeds.conf.default"
-echo "src-git helloworld https://github.com/fw876/helloworld" >> "feeds.conf.default"
+echo "src-git helloworld https://github.com/LeXwDeX/helloworld" >> "feeds.conf.default"
 
 # Update and install feeds
 ./scripts/feeds clean
