@@ -102,7 +102,7 @@ jobs:
     - name: Modify Kernel Version
       run: |
         cd openwrt
-        sed -i 's/LINUX_VERSION-6.75 = 6.75.00/LINUX_VERSION-5.15 = 5.15.00/g' target/linux/x86/Makefile
+        sed -i 's/LINUX_VERSION-5.10 = 5.10.00/LINUX_VERSION-5.15 = 5.15.00/g' target/linux/x86/Makefile
 
     - name: Configure Kernel Version
       run: |
