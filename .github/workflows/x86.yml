@@ -98,7 +98,18 @@ jobs:
 
     - name: Feeds Check again
       run: cd openwrt && ./scripts/feeds update -a && ./scripts/feeds install -a
-    
+
+    - name: Modify Kernel Version
+      run: |
+        cd openwrt
+        sed -i 's/LINUX_VERSION-6.75 = 6.75.00/LINUX_VERSION-5.15 = 5.15.00/g' target/linux/x86/Makefile
+
+    - name: Configure Kernel Version
+      run: |
+        cd openwrt
+        echo "CONFIG_KERNEL_KVER=5.15" >> .config
+        make defconfig
+          
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
