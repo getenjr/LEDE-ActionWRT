@@ -107,7 +107,7 @@ jobs:
     - name: Configure Kernel Version
       run: |
         cd openwrt
-        echo "CONFIG_KERNEL_KVER=5.15" >> .config
+        echo "CONFIG_KERNEL_KVER=5.10" >> .config
         make defconfig
           
     - name: Load custom configuration
