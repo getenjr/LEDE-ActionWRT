@@ -1,0 +1,83 @@
+name: Build LEDE-X86
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+
+env:
+  REPO_URL: https://git.openwrt.org/openwrt/openwrt.git
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: SEED/X86/seed.config
+  DIY_P1_SH: SCRIPTS/X86/x86-part1.sh
+  DIY_P2_SH: SCRIPTS/X86/x86-part2.sh
+  UPLOAD_FIRMWARE: true
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+    
+      - name: Clone LEDE Source
+        run: |
+          git clone https://git.openwrt.org/openwrt/openwrt.git lede
+          cd lede
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Modify Kernel Version
+        run: |
+          cd lede
+          sed -i 's/KERNEL_PATCHVER:=5.10/KERNEL_PATCHVER:=5.15/' target/linux/*/Makefile
+          sed -i 's/LINUX_VERSION-5.10 = 5.10.176/LINUX_VERSION-5.10 = 5.10.200/' include/kernel-version.mk
+          cat target/linux/*/Makefile | grep KERNEL_PATCHVER
+
+      - name: Configure Build
+        run: |
+          cd lede
+          make defconfig
+
+      - name: Compile OpenWrt
+        run: |
+          cd lede
+          make -j$(nproc)
+
+      - name: Check space usage
+      if: (!cancelled())
+      run: df -hT
+
+    - name: Organize files
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload firmware directory
+      uses: actions/upload-artifact@main
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "release_tag=$(date +"%Y.%m.%d")-X86" >> $GITHUB_OUTPUT
+        touch release.txt
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v1
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        body_path: release.txt
+        files: ${{ env.FIRMWARE }}/*
