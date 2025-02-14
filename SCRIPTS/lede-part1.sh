@@ -13,4 +13,3 @@
 # Add a feed source
 sed -i "/helloworld/d" "feeds.conf.default"
 echo "src-git helloworld https://github.com/LeXwDeX/helloworld" >> "feeds.conf.default"
-sed -i '$a src-git smpackage https://github.com/kenzok8/small-package' 'feeds.conf.default'
