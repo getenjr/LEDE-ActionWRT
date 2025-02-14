@@ -1,39 +1,45 @@
 #!/bin/bash
 #
-# Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
+# Copyright (c) 2021 F-T-Otaku
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# https://github.com/P3TERX/Actions-OpenWrt
-# File name: diy-part2.sh
+# https://github.com/HEXtoDEC/ActionWRT
+# File name: x86-part2.sh
 # Description: OpenWrt DIY script part 2 (After Update feeds)
 #
 
-########### 修改默认 IP ###########
-#sed -i 's/192.168.1.1/192.168.50.5/g' package/base-files/files/bin/config_generate
+# Add applications
+
+# # Passwall
+# git clone -b packages --depth=1 https://github.com/xiaorouji/openwrt-passwall.git ./package/lean/passwall_package
+# git clone -b luci --depth=1 https://github.com/xiaorouji/openwrt-passwall.git ./package/lean/passwall
+# cp -rf ./package/lean/passwall_package/* ./package/lean/passwall
+# rm -rf ./package/lean/passwall_package
+
+# # Openclash
+# git clone -b master --depth=1 https://github.com/vernesong/OpenClash.git ./package/lean/luci-app-openclash
+# mkdir -p ./package/lean/openclash
+# cp -rf ./package/lean/luci-app-openclash/luci-app-openclash/* ./package/lean/openclash
+# rm -rf ./package/lean/luci-app-openclash
+
+# Mosdns
+# find ./ | grep Makefile | grep v2ray-geodata | xargs rm -f
+# find ./ | grep Makefile | grep mosdns | xargs rm -f
+# find ./ | grep Makefile | grep luci-app-mosdns | xargs rm -f
+# git clone -b master --depth=1 https://github.com/QiuSimons/openwrt-mos ./package/mosdns
+
+# Theme Argon
+# rm -rf ./package/feeds/luci/luci-theme-argon
+# git clone -b 18.06 --depth=1 https://github.com/jerrykuku/luci-theme-argon.git ./package/lean/luci-theme-argon
+# git clone -b master --depth=1 https://github.com/jerrykuku/luci-app-argon-config.git ./package/lean/luci-app-argon-config
+
+# Modify default IP
 sed -i 's/192.168.1.1/192.168.1.1/g' package/base-files/files/bin/config_generate
 
-########### 设置密码为空（可选） ###########
-sed -i 's@.*CYXluq4wUazHjmCDBCqXF*@#&@g' package/lean/default-settings/files/zzz-default-settings
+# Modify default Hostname
+sed -i 's/OpenWrt/GT_wrT/g' package/base-files/files/bin/config_generate
 
-########### 更改大雕源码（可选）###########
-sed -i 's/KERNEL_PATCHVER:=6.1/KERNEL_PATCHVER:=6.1/g' target/linux/x86/Makefile
-
-########### 更改默认主题（可选）###########
-# 删除自定义源默认的 argon 主题
-# rm -rf package/lean/luci-theme-argon
-# 拉取 argon 原作者的源码
-# git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/lean/luci-theme-argon
-# 替换默认主题为 luci-theme-argon
-# sed -i 's/luci-theme-bootstrap/luci-theme-argon/' feeds/luci/collections/luci/Makefile
-# make menuconfig时记得勾选LuCI ---> Applications ---> luci-app-argon-config
-
-########### 更新lean的内置的smartdns版本 ###########
-sed -i 's/1.2022.38/1.2022.40/g' feeds/packages/net/smartdns/Makefile
-sed -i 's/5a2559f0648198c290bb8839b9f6a0adab8ebcdc/d792e5f7f71ce9320b341fe02135077e00fa3e21/g' feeds/packages/net/smartdns/Makefile
-sed -i 's/^PKG_MIRROR_HASH/#&/' feeds/packages/net/smartdns/Makefile
-
-########### 安装smartdns（必选）###########
-git clone -b lede https://github.com/pymumu/luci-app-smartdns.git package/luci-app-smartdns
-# git clone https://github.com/pymumu/smartdns.git package/smartdns
+# Clean build directory before compilation
+rm -rf tmp/
